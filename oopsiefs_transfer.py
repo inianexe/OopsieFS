@@ -19,6 +19,10 @@ DISCOVERY_PORT = 8766
 HTTP_PORT = 8765
 
 
+class ReusableThreadingHTTPServer(ThreadingHTTPServer):
+    allow_reuse_address = True
+
+
 def _local_ip() -> str:
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -77,7 +81,7 @@ class TransferReceiver:
             def log_message(self, _format, *_args):
                 return
 
-        self._httpd = ThreadingHTTPServer(("0.0.0.0", self.http_port), Handler)
+        self._httpd = ReusableThreadingHTTPServer(("0.0.0.0", self.http_port), Handler)
         self.http_port = self._httpd.server_address[1]
         self._http_thread = threading.Thread(target=self._httpd.serve_forever, daemon=True)
         self._http_thread.start()
@@ -90,34 +94,40 @@ class TransferReceiver:
         if self._httpd:
             self._httpd.shutdown()
             self._httpd.server_close()
+        if self._http_thread and self._http_thread.is_alive():
+            self._http_thread.join(timeout=2)
+        if self._udp_thread and self._udp_thread.is_alive():
+            self._udp_thread.join(timeout=2)
         self.on_log("Receiver stopped")
 
     def _serve_discovery(self) -> None:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind(("", self.discovery_port))
-        sock.settimeout(0.4)
-        while not self._stop.is_set():
-            try:
-                payload, addr = sock.recvfrom(2048)
-            except socket.timeout:
-                continue
-            try:
-                message = json.loads(payload.decode("utf-8"))
-            except json.JSONDecodeError:
-                continue
-            if message.get("type") != "oopsiefs_lookup" or message.get("code") != self.code:
-                continue
-            if time.time() > self.expires_at:
-                continue
-            response = {
-                "type": "oopsiefs_peer",
-                "code": self.code,
-                "host": _local_ip(),
-                "port": self.http_port,
-            }
-            sock.sendto(json.dumps(response).encode("utf-8"), addr)
-        sock.close()
+        try:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.bind(("", self.discovery_port))
+            sock.settimeout(0.4)
+            while not self._stop.is_set():
+                try:
+                    payload, addr = sock.recvfrom(2048)
+                except socket.timeout:
+                    continue
+                try:
+                    message = json.loads(payload.decode("utf-8"))
+                except json.JSONDecodeError:
+                    continue
+                if message.get("type") != "oopsiefs_lookup" or message.get("code") != self.code:
+                    continue
+                if time.time() > self.expires_at:
+                    continue
+                response = {
+                    "type": "oopsiefs_peer",
+                    "code": self.code,
+                    "host": _local_ip(),
+                    "port": self.http_port,
+                }
+                sock.sendto(json.dumps(response).encode("utf-8"), addr)
+        finally:
+            sock.close()
 
 
 def resolve_code(code: str, discovery_port: int = DISCOVERY_PORT, timeout: float = 4.0) -> tuple[str, int]:

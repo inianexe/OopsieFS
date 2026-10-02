@@ -29,3 +29,4 @@ vendor/
 # Test scratch files
 sample.txt
 script.sh
+.testdata/

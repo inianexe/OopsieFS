@@ -529,6 +529,10 @@ class OopsieApp(tk.Tk):
         return datetime.fromtimestamp(value).strftime("%b %d, %H:%M")
 
 
-if __name__ == "__main__":
+def main() -> None:
     app = OopsieApp()
     app.mainloop()
+
+
+if __name__ == "__main__":
+    main()

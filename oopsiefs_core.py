@@ -231,7 +231,7 @@ class OopsieStore:
         if portal == "deleted":
             return sorted([item for item in records if item.deleted], key=lambda item: item.modified_at, reverse=True)
         if portal == "versions":
-            return sorted([item for item in records if len(item.versions) > 1], key=lambda item: item.modified_at, reverse=True)
+            return sorted([item for item in records if item.versions], key=lambda item: item.modified_at, reverse=True)
         if portal == "all":
             return sorted([item for item in records if not item.deleted], key=lambda item: item.rel_path.lower())
         return []
@@ -449,6 +449,8 @@ class OopsieStore:
 
     def _restore_version_index(self, file_id: str, version_index: int) -> None:
         item = self.meta["files"][file_id]
+        if version_index < 0 or version_index >= len(item["versions"]):
+            raise IndexError("Version index out of range")
         version = item["versions"][version_index]
         src = self.version_dir / version["stored_name"]
         dst = self.files_dir / item["rel_path"]
@@ -491,8 +493,10 @@ class OopsieStore:
     def _refresh_record(self, file_id: str, path: Path) -> None:
         stat = path.stat()
         item = self.meta["files"][file_id]
+        rel_path = path.relative_to(self.files_dir).as_posix()
         item["name"] = path.name
-        item["rel_path"] = path.relative_to(self.files_dir).as_posix()
+        item["rel_path"] = rel_path
+        item.setdefault("original_rel_path", rel_path)
         item["size"] = stat.st_size
         item["modified_at"] = stat.st_mtime
 

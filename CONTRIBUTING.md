@@ -17,9 +17,16 @@ python3 -m py_compile oopsiefs_config.py oopsiefs_core.py oopsiefs_app.py oopsie
 .venv/bin/python -m py_compile oopsiefs_fuse.py
 ```
 
+Run the automated tests:
+
+```bash
+make smoke
+```
+
 ## Guidelines
 
 - Keep runtime data out of git.
 - Prefer standard-library implementations when practical.
 - Keep filesystem operations safe and explicit.
 - Document OS concepts when adding new features.
+- Add or update tests for command history, recovery, transfer, and metadata behavior.

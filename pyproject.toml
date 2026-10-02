@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "oopsiefs"
+version = "0.1.0"
+description = "Undoable Linux file history, read-only FUSE portals, and code-based LAN file transfer."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "inianexe" }]
+keywords = ["filesystem", "inotify", "fuse", "linux", "file-transfer", "os-project"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: X11 Applications",
+  "Intended Audience :: Education",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Topic :: Desktop Environment :: File Managers",
+  "Topic :: Education",
+  "Topic :: System :: Filesystems",
+]
+dependencies = ["fusepy==3.0.1"]
+
+[project.urls]
+Homepage = "https://github.com/inianexe/OopsieFS"
+Issues = "https://github.com/inianexe/OopsieFS/issues"
+
+[project.scripts]
+oopsiefs = "oopsiefs_app:main"
+oopsiefs-fuse = "oopsiefs_fuse:main"
+
+[tool.setuptools]
+py-modules = [
+  "oopsiefs_app",
+  "oopsiefs_config",
+  "oopsiefs_core",
+  "oopsiefs_fuse",
+  "oopsiefs_transfer",
+  "oopsiefs_watcher",
+]

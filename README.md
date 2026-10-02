@@ -23,6 +23,10 @@ care about recent activity:
 OopsieFS answers those questions through a desktop app, a metadata store, a
 FUSE mount, and a lightweight LAN transfer layer.
 
+> Status: OopsieFS is an educational alpha. It is useful for demos and learning
+> OS concepts, but it is not a backup system and should not be trusted as the
+> only copy of important files.
+
 ## Features
 
 - **Lightweight file tracking**
@@ -57,6 +61,15 @@ FUSE mount, and a lightweight LAN transfer layer.
   - Sender enters the code and sends a selected file over the same local network.
   - No cloud account or external server required.
 
+## Screens You Get
+
+- `Latest Changed`: recent files captured by `inotify` or manual indexing.
+- `Command History`: OopsieFS operations, including reversible actions.
+- `Deleted Files`: files moved into recovery storage by OopsieFS.
+- `Version History`: files with restorable snapshots.
+- `All Files`: active indexed files.
+- `File Transfer`: receive with a short code or send the selected file.
+
 ## Project Structure
 
 ```text
@@ -68,7 +81,11 @@ OopsieFS/
 ├── oopsiefs_transfer.py   # LAN send/receive code transfer
 ├── oopsiefs_watcher.py    # Linux inotify watcher
 ├── requirements.txt       # Python dependency list
+├── tests/                 # unit/integration tests
+├── .github/workflows/     # CI
 ├── CONTRIBUTING.md
+├── CHANGELOG.md
+├── SECURITY.md
 ├── LICENSE
 └── README.md
 ```
@@ -116,6 +133,17 @@ You can also launch it directly without installing a menu entry:
 
 The first launch creates a local `.venv` and installs Python dependencies
 automatically.
+
+### Python Package Mode
+
+For development, install it as an editable package:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install --upgrade pip
+.venv/bin/python -m pip install -e .
+.venv/bin/oopsiefs
+```
 
 ## Running the Desktop App
 
@@ -179,6 +207,17 @@ OOPSIEFS_SCAN_WINDOW_MINUTES=10 python3 oopsiefs_app.py
 6. Use `Deleted Files` to restore supported deleted files.
 7. Use `Version History` to restore snapshots created by OopsieFS operations.
 
+### What Is Undoable?
+
+| Action | Undo behavior |
+| --- | --- |
+| Tracked edit | Restores the pre-edit snapshot |
+| Soft delete | Restores the deleted file from recovery storage |
+| Restore deleted file | Moves the restored file back into recovery storage |
+| Restore version | Restores the version that was active before the restore |
+| External watcher event | Logged only, not undoable |
+| Send file | Logged only, not undoable |
+
 ## FUSE Portal Mount
 
 Install optional FUSE system packages first:
@@ -231,6 +270,26 @@ Received files are saved under:
 ~/OopsieFS_Received/Received/
 ```
 
+The sender and receiver must be on the same local network. OopsieFS uses UDP
+discovery and an HTTP upload protected by the short receiver code.
+
+## Testing
+
+Run the full local smoke suite:
+
+```bash
+make smoke
+```
+
+Or run tests directly:
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+The tests cover metadata indexing, snapshots, undo behavior, delete/restore, and
+code-based LAN transfer using local dynamic ports.
+
 ## Environment Variables
 
 | Variable | Purpose |
@@ -274,6 +333,7 @@ Runtime metadata is preserved at:
 - It does not monitor every system directory.
 - External deletes can be detected only for files already indexed.
 - LAN transfer works on the same local network; it is not an internet relay.
+- LAN transfer is not end-to-end encrypted.
 
 ## Quick Demo Script
 
