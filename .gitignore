@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# OopsieFS runtime data
+OopsieFS_Workspace/
+OopsieFS_Mount/
+OopsieFS_*/
+.oopsie_store/
+
+# Locally extracted/binary dependencies
+vendor/
+
+# Local/editor files
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Test scratch files
+sample.txt
+script.sh
